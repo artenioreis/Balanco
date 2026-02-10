@@ -1,0 +1,166 @@
+/* static/css/style.css */
+
+/* Estilos gerais do corpo da página */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa; /* Cor de fundo clara */
+    color: #343a40; /* Cor de texto padrão escura */
+    padding-top: 20px; /* Espaçamento no topo para o conteúdo */
+    padding-bottom: 20px; /* Espaçamento na parte inferior */
+}
+
+/* Estilos para o container principal */
+.container {
+    max-width: 1200px; /* Largura máxima do container para centralizar o conteúdo */
+    margin-left: auto; /* Centraliza o container */
+    margin-right: auto; /* Centraliza o container */
+}
+
+/* Estilos para os cards (seções com bordas e sombra) */
+.card {
+    margin-bottom: 20px; /* Espaçamento entre os cards */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra suave para um efeito 3D */
+    border-radius: 8px; /* Bordas arredondadas */
+}
+
+.card-header {
+    background-color: #007bff; /* Cor de fundo azul para o cabeçalho do card */
+    color: white; /* Texto branco no cabeçalho */
+    font-weight: bold; /* Texto em negrito */
+    border-top-left-radius: 8px; /* Bordas arredondadas no topo */
+    border-top-right-radius: 8px; /* Bordas arredondadas no topo */
+}
+
+/* Estilos para formulários e inputs */
+.form-label {
+    font-weight: 600; /* Rótulos de formulário em negrito */
+}
+
+.form-control:focus {
+    border-color: #80bdff; /* Borda azul mais clara ao focar */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra ao focar */
+}
+
+/* Estilos para mensagens de alerta (flash messages) */
+.alert {
+    margin-top: 15px; /* Espaçamento acima das mensagens de alerta */
+    border-radius: 5px; /* Bordas arredondadas */
+}
+
+/* Estilos específicos para a tabela de produtos contados */
+#countedProductsTableBody {
+    font-size: 0.85em; /* Diminui a fonte para 85% do tamanho padrão para economizar espaço */
+}
+
+/* Ajusta o padding das células da tabela para torná-las mais compactas */
+#countedProductsTableBody td,
+#countedProductsTableBody th {
+    padding: 0.4rem 0.5rem; /* Reduz o padding das células */
+    vertical-align: middle; /* Alinha o conteúdo verticalmente ao meio */
+}
+
+/* Ajuste para os botões dentro da célula de ações na tabela */
+#countedProductsTableBody .btn-sm {
+    padding: 0.25rem 0.5rem; /* Reduz o padding dos botões pequenos */
+    font-size: 0.75em;      /* Diminui a fonte dos botões */
+    line-height: 1;         /* Garante que a altura da linha seja compacta */
+}
+
+/* Estilos para a coluna de ações para garantir que os botões fiquem lado a lado */
+#countedProductsTableBody td:last-child {
+    white-space: nowrap; /* Impede que os botões quebrem linha */
+    min-width: 120px;    /* Garante uma largura mínima para a coluna de ações */
+}
+
+/* Estilos para o cabeçalho da tabela de produtos contados */
+.table thead th {
+    font-size: 0.9em; /* Diminui um pouco a fonte do cabeçalho para consistência */
+    padding: 0.5rem 0.5rem; /* Ajusta padding do cabeçalho */
+    background-color: #e9ecef; /* Cor de fundo leve para o cabeçalho */
+    border-bottom: 2px solid #dee2e6; /* Borda inferior mais pronunciada */
+}
+
+/* Estilos para o rodapé da tabela (se houver) */
+.table tfoot td {
+    font-weight: bold; /* Texto em negrito no rodapé */
+    background-color: #f2f2f2; /* Cor de fundo para o rodapé */
+}
+
+/* Estilos para o modal de edição */
+#editProductModal .modal-content {
+    border-radius: 10px; /* Bordas arredondadas para o modal */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Sombra mais forte para o modal */
+}
+
+#editProductModal .modal-header {
+    background-color: #007bff; /* Cor de fundo azul para o cabeçalho do modal */
+    color: white; /* Texto branco */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+#editProductModal .modal-title {
+    font-weight: bold; /* Título do modal em negrito */
+}
+
+/* Estilos para botões */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529; /* Cor do texto para contraste */
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+/* Estilos para a seção de detalhes do produto encontrado */
+#productDetailsCard {
+    display: none; /* Inicialmente oculto, será mostrado via JS */
+}
+
+/* Estilos para a barra de navegação ou cabeçalho (se houver) */
+.navbar {
+    margin-bottom: 20px;
+}
