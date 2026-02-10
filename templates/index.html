@@ -3,26 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balança de Estoque</title>
-    <!-- Importa o Bootstrap CSS para estilização e componentes responsivos -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Importa o arquivo de estilos personalizado -->
+    <title>Contagem de Estoque</title>
+    <!-- Link para o Bootstrap CSS para estilização e componentes responsivos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Link para o seu arquivo CSS personalizado para estilos adicionais -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1 class="my-4 text-center">Balança de Estoque</h1>
-
-        <!-- Seção de Botões de Ação Global -->
-        <div class="d-flex justify-content-between mb-4">
-            <a href="{{ url_for('settings') }}" class="btn btn-secondary">Configurações do Banco de Dados</a>
-            <button id="clearCountedProductsBtn" class="btn btn-warning">Limpar Produtos Contados</button>
+    <!-- Barra de Navegação (Navbar) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Contagem de Estoque</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('settings') }}">Configurações do DB</a>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </nav>
 
+    <div class="container mt-4">
         <!-- Exibição de Mensagens Flash do Flask -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages mb-3">
+                <div class="flash-messages">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
@@ -33,100 +39,124 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Card para o Formulário de Busca de Produtos -->
-        <div class="card mb-4">
+        <!-- Card para Busca de Produto por Código de Barras -->
+        <div class="card">
             <div class="card-header">
-                <h3>Buscar Produto por Código de Barras</h3>
+                Buscar Produto
             </div>
             <div class="card-body">
                 <form id="searchForm">
                     <div class="mb-3">
-                        <label for="barcodeInput" class="form-label">Código de Barras:</label>
-                        <input type="text" class="form-control" id="barcodeInput" placeholder="Digite ou bipar o código de barras" autofocus>
+                        <label for="barcodeInput" class="form-label">Código de Barras</label>
+                        <input type="text" class="form-control" id="barcodeInput" placeholder="Bipe ou digite o código de barras" autofocus>
                     </div>
-                    <button type="submit" class="btn btn-primary">Buscar e Adicionar</button>
+                    <button type="submit" class="btn btn-primary">Buscar</button>
                 </form>
-                <div id="searchMessage" class="mt-3">
-                    <!-- Mensagens de feedback da busca aparecerão aqui -->
+            </div>
+        </div>
+
+        <!-- Card de Detalhes do Produto (inicialmente oculto, exibido via JavaScript) -->
+        <div id="productDetailsCard" class="card mt-4">
+            <div class="card-header">
+                Detalhes do Produto Encontrado
+            </div>
+            <div class="card-body">
+                <p><strong>Código:</strong> <span id="detailCodigoProduto"></span></p>
+                <p><strong>Nome:</strong> <span id="detailNomeProduto"></span></p>
+                <p><strong>Cód. Barras:</strong> <span id="detailCodigoBarras"></span></p>
+                <p><strong>Unidade de Venda:</strong> <span id="detailUnidadeVenda"></span></p>
+                <p><strong>Multiplicador Sugerido:</strong> <span id="detailMultiplicadorSugerido"></span></p>
+
+                <div class="d-flex justify-content-start mt-3 flex-wrap">
+                    <!-- Botão para adicionar ao último lote contado ou ao único lote disponível -->
+                    <button id="addDefaultLotBtn" class="btn btn-success me-2 mb-2">Adicionar ao Lote Padrão/Último</button>
+
+                    <!-- Botão para forçar a seleção de um lote diferente via modal -->
+                    <button id="selectDifferentLotBtn" class="btn btn-info me-2 mb-2">Adicionar Lote Diferente</button>
                 </div>
             </div>
         </div>
 
-        <!-- Card para Detalhes do Produto Encontrado (inicialmente oculto) -->
-        <div class="card mb-4" id="productDetailsCard" style="display: none;">
+        <!-- Card da Tabela de Produtos Contados -->
+        <div class="card mt-4">
             <div class="card-header">
-                <h3>Detalhes do Produto Encontrado</h3>
-            </div>
-            <div class="card-body">
-                <form id="productDetailsForm">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="codigoProduto" class="form-label">Código Produto:</label>
-                            <input type="text" class="form-control" id="codigoProduto" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="codigoBarras" class="form-label">Código de Barras:</label>
-                            <input type="text" class="form-control" id="codigoBarras" readonly>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="nomeProduto" class="form-label">Nome Produto:</label>
-                        <input type="text" class="form-control" id="nomeProduto" readonly>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="lote" class="form-label">Lote:</label>
-                            <input type="text" class="form-control" id="lote">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="dataFabricacao" class="form-label">Data Fabricação:</label>
-                            <input type="date" class="form-control" id="dataFabricacao">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="dataValidade" class="form-label">Data Validade:</label>
-                            <input type="date" class="form-control" id="dataValidade">
-                        </div>
-                    </div>
-                    <!-- Campos ocultos para armazenar dados do produto para envio ao backend -->
-                    <input type="hidden" id="multiplicador" value="1">
-                    <input type="hidden" id="unidadeVenda" value="UN">
-                </form>
-            </div>
-        </div>
-
-        <!-- Card para a Tabela de Produtos Contados -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3>Produtos Contados</h3>
-                <button id="generateFileBtn" class="btn btn-success">Gerar Arquivo de Importação</button>
+                Produtos Contados
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover table-sm">
                         <thead>
                             <tr>
-                                <th>Cód. Produto</th> <!-- Esta coluna será usada para o agrupamento visual -->
+                                <th>#</th>
                                 <th>Cód. Barras</th>
-                                <th>Nome</th>
+                                <th>Nome Produto</th>
                                 <th>Lote</th>
                                 <th>Fabricação</th>
                                 <th>Validade</th>
-                                <th>Qtd. (Base x Multiplicador)</th> <!-- Coluna atualizada para mostrar base e multiplicador -->
+                                <th>Quantidade</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="countedProductsTableBody">
-                            <tr>
-                                <td colspan="8" class="text-center">Nenhum produto contado ainda.</td>
-                            </tr>
+                            <!-- Linhas de produtos serão inseridas aqui pelo JavaScript -->
                         </tbody>
                     </table>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <!-- Botão para gerar o arquivo de importação -->
+                    <button id="generateFileBtn" class="btn btn-primary me-2">Gerar Arquivo de Importação</button>
+                    <!-- NOVO BOTÃO: Adicionar Lote Manualmente (agora na seção de ações da tabela) -->
+                    <button id="addManualLotBtn" class="btn btn-warning me-2">Adicionar Lote Manualmente</button>
+                    <!-- Botão para limpar todos os produtos contados -->
+                    <button id="clearCountedProductsBtn" class="btn btn-danger">Limpar Contagem</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Edição de Produto (Pop-up para editar itens da coleta) -->
+    <!-- Modal de Seleção de Lote -->
+    <div class="modal fade" id="selectLotModal" tabindex="-1" aria-labelledby="selectLotModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="selectLotModalLabel">Selecionar Lote para <span id="modalProductName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Multiplicador Sugerido: <span id="modalMultiplicadorSugerido"></span></p>
+                    <div id="selectLotMessage" class="alert d-none" role="alert"></div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th></th> <!-- Para o radio button -->
+                                    <th>Lote</th>
+                                    <th>Fabricação</th>
+                                    <th>Validade</th>
+                                    <th>Saldo Disponível</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lotesTableBody">
+                                <!-- Lotes serão inseridos aqui pelo JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantityBaseInput" class="form-label">Quantidade a Adicionar (Base)</label>
+                        <input type="number" class="form-control" id="quantityBaseInput" value="1" min="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <!-- NOVO BOTÃO: Adicionar Rápido (Qtd: 1) - AGORA NO MODAL FOOTER -->
+                    <button type="button" class="btn btn-primary me-2" id="addQuickLotModalBtn">Adicionar Rápido (Qtd: 1)</button>
+                    <button type="button" class="btn btn-success" id="addSelectedLotBtn">Adicionar Lote Selecionado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Produto Contado -->
     <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -135,41 +165,39 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="editProductForm">
-                        <input type="hidden" id="editProductId"> <!-- Campo oculto para armazenar o ID do item a ser editado -->
-                        <div class="mb-3">
-                            <label for="editCodigoProduto" class="form-label">Código Produto:</label>
-                            <input type="text" class="form-control" id="editCodigoProduto" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editNomeProduto" class="form-label">Nome Produto:</label>
-                            <input type="text" class="form-control" id="editNomeProduto" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editMultiplicador" class="form-label">Multiplicador (Unidade):</label>
-                            <input type="number" class="form-control" id="editMultiplicador" min="1"> <!-- Multiplicador agora editável -->
-                        </div>
-                        <div class="mb-3">
-                            <label for="editLote" class="form-label">Lote:</label>
-                            <input type="text" class="form-control" id="editLote">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editDataFabricacao" class="form-label">Data Fabricação:</label>
-                            <input type="date" class="form-control" id="editDataFabricacao">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editDataValidade" class="form-label">Data Validade:</label>
-                            <input type="date" class="form-control" id="editDataValidade">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editQuantidadeBase" class="form-label">Quantidade Base (Unidades):</label> <!-- Campo para editar a quantidade base -->
-                            <input type="number" class="form-control" id="editQuantidadeBase" min="1">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editQuantidadeTotal" class="form-label">Quantidade Total (Calculada):</label> <!-- Exibe a quantidade total calculada -->
-                            <input type="text" class="form-control" id="editQuantidadeTotal" readonly>
-                        </div>
-                    </form>
+                    <input type="hidden" id="editProductId">
+                    <div class="mb-3">
+                        <label for="editCodigoProduto" class="form-label">Código Produto</label>
+                        <input type="text" class="form-control" id="editCodigoProduto" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNomeProduto" class="form-label">Nome Produto</label>
+                        <input type="text" class="form-control" id="editNomeProduto" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLote" class="form-label">Lote</label>
+                        <input type="text" class="form-control" id="editLote">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDataFabricacao" class="form-label">Data Fabricação</label>
+                        <input type="date" class="form-control" id="editDataFabricacao">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDataValidade" class="form-label">Data Validade</label>
+                        <input type="date" class="form-control" id="editDataValidade">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQuantidadeBaseInput" class="form-label">Quantidade Base</label>
+                        <input type="number" class="form-control" id="editQuantidadeBaseInput" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editMultiplicadorInput" class="form-label">Multiplicador Usado</label>
+                        <input type="number" class="form-control" id="editMultiplicadorInput" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQuantidadeTotalInput" class="form-label">Quantidade Total</label>
+                        <input type="text" class="form-control" id="editQuantidadeTotalInput" readonly>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -179,9 +207,11 @@
         </div>
     </div>
 
-    <!-- Importa o Bootstrap JavaScript (com Popper.js) para funcionalidades como modais -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Importa o arquivo de script personalizado da aplicação -->
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- Link para o Bootstrap JavaScript (bundle inclui Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Link para o seu arquivo JavaScript personalizado. O atributo 'defer' garante que o script
+         será executado somente após a análise completa do documento HTML, o que é uma boa prática
+         para manipulação do DOM. <sources>[2,4,5]</sources> -->
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 </body>
 </html>

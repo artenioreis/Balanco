@@ -90,20 +90,20 @@ body {
     background-color: #f2f2f2; /* Cor de fundo para o rodapé */
 }
 
-/* --- Estilos para o modal de edição --- */
-#editProductModal .modal-content {
+/* --- Estilos para modais (seleção de lote e edição de produto) --- */
+.modal-content {
     border-radius: 10px; /* Bordas arredondadas para o modal */
     box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Sombra mais forte para o modal */
 }
 
-#editProductModal .modal-header {
+.modal-header {
     background-color: #007bff; /* Cor de fundo azul para o cabeçalho do modal */
     color: white; /* Texto branco */
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
 
-#editProductModal .modal-title {
+.modal-title {
     font-weight: bold; /* Título do modal em negrito */
 }
 
@@ -138,7 +138,18 @@ body {
     border-color: #bd2130;
 }
 
-.btn-warning {
+.btn-info { /* Adicionado para o botão "Adicionar Lote Diferente" */
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.btn-warning { /* Adicionado para o botão "Adicionar Lote Manualmente" */
     background-color: #ffc107;
     border-color: #ffc107;
     color: #212529; /* Cor do texto para contraste */

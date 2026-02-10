@@ -1,200 +1,350 @@
 // static/js/script.js
 
-// Garante que o script só execute após o DOM estar completamente carregado
+// Garante que o script só será executado após o DOM estar completamente carregado.
+// Isso é crucial para que todos os elementos HTML referenciados existam. <sources>[2,4,5]</sources>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Referências aos Elementos do DOM ---
-    // Formulário de Busca
-    const barcodeInput = document.getElementById('barcodeInput');
+    // --- Referências a Elementos HTML ---
+    // Formulário e campo de input para busca de produto
     const searchForm = document.getElementById('searchForm');
-    const searchMessage = document.getElementById('searchMessage');
+    const barcodeInput = document.getElementById('barcodeInput');
 
-    // Detalhes do Produto Encontrado
+    // Card de detalhes do produto encontrado
     const productDetailsCard = document.getElementById('productDetailsCard');
-    const codigoProdutoInput = document.getElementById('codigoProduto');
-    const codigoBarrasInput = document.getElementById('codigoBarras');
-    const nomeProdutoInput = document.getElementById('nomeProduto');
-    const loteInput = document.getElementById('lote');
-    const dataFabricacaoInput = document.getElementById('dataFabricacao');
-    const dataValidadeInput = document.getElementById('dataValidade');
-    const multiplicadorInput = document.getElementById('multiplicador'); // Campo oculto para o multiplicador sugerido
-    const unidadeVendaInput = document.getElementById('unidadeVenda'); // Campo oculto para a unidade de venda
+    const detailCodigoProduto = document.getElementById('detailCodigoProduto');
+    const detailNomeProduto = document.getElementById('detailNomeProduto');
+    const detailCodigoBarras = document.getElementById('detailCodigoBarras');
+    const detailUnidadeVenda = document.getElementById('detailUnidadeVenda');
+    const detailMultiplicadorSugerido = document.getElementById('detailMultiplicadorSugerido');
 
-    // Tabela de Produtos Contados
+    // Botões de ação no card de detalhes
+    const addDefaultLotBtn = document.getElementById('addDefaultLotBtn');
+    const selectDifferentLotBtn = document.getElementById('selectDifferentLotBtn');
+    // const addManualLotBtn = document.getElementById('addManualLotBtn'); // Removido daqui, agora está na seção de ações da tabela
+
+    // Tabela de produtos contados
     const countedProductsTableBody = document.getElementById('countedProductsTableBody');
+
+    // Botões de ação da tabela
     const generateFileBtn = document.getElementById('generateFileBtn');
     const clearCountedProductsBtn = document.getElementById('clearCountedProductsBtn');
+    const addManualLotBtn = document.getElementById('addManualLotBtn'); // NOVO: Referência ao botão movido
 
-    // Elementos do Modal de Edição
-    const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal')); // Instância do modal Bootstrap
+    // Modal de seleção de lote (Bootstrap Modal)
+    const selectLotModalElement = document.getElementById('selectLotModal');
+    const selectLotModal = new bootstrap.Modal(selectLotModalElement); // Instância do modal Bootstrap
+    const modalProductName = document.getElementById('modalProductName');
+    const modalMultiplicadorSugerido = document.getElementById('modalMultiplicadorSugerido');
+    const lotesTableBody = document.getElementById('lotesTableBody');
+    const quantityBaseInput = document.getElementById('quantityBaseInput');
+    const addSelectedLotBtn = document.getElementById('addSelectedLotBtn');
+    const selectLotMessage = document.getElementById('selectLotMessage');
+    const addQuickLotModalBtn = document.getElementById('addQuickLotModalBtn'); // NOVO: Botão "Adicionar Rápido (Qtd: 1)" no modal
+
+    // Modal de edição de produto (Bootstrap Modal)
+    const editProductModalElement = document.getElementById('editProductModal');
+    const editProductModal = new bootstrap.Modal(editProductModalElement); // Instância do modal Bootstrap
     const editProductIdInput = document.getElementById('editProductId');
     const editCodigoProdutoInput = document.getElementById('editCodigoProduto');
     const editNomeProdutoInput = document.getElementById('editNomeProduto');
-    const editMultiplicadorInput = document.getElementById('editMultiplicador'); // Multiplicador no modal (agora editável)
+    const editMultiplicadorInput = document.getElementById('editMultiplicadorInput');
     const editLoteInput = document.getElementById('editLote');
     const editDataFabricacaoInput = document.getElementById('editDataFabricacao');
     const editDataValidadeInput = document.getElementById('editDataValidade');
-    const editQuantidadeBaseInput = document.getElementById('editQuantidadeBase'); // Quantidade base no modal
-    const editQuantidadeTotalInput = document.getElementById('editQuantidadeTotal'); // Quantidade total calculada no modal (somente leitura)
+    const editQuantidadeBaseInput = document.getElementById('editQuantidadeBaseInput');
+    const editQuantidadeTotalInput = document.getElementById('editQuantidadeTotalInput');
     const saveEditedProductBtn = document.getElementById('saveEditedProductBtn');
 
-    // Variável para armazenar os detalhes do produto atualmente buscado
-    let currentProduct = null;
+    // Variável para armazenar os detalhes do produto atualmente exibido/selecionado
+    let currentProductDetails = null;
 
-    // --- Funções de Utilidade ---
+    // --- Funções Auxiliares ---
 
     /**
-     * Exibe uma mensagem de feedback na interface do usuário.
+     * Exibe uma mensagem de alerta na tela.
      * @param {string} message - A mensagem a ser exibida.
-     * @param {string} type - O tipo de alerta Bootstrap (ex: 'info', 'success', 'danger', 'warning').
+     * @param {string} type - O tipo de alerta (e.g., 'success', 'danger', 'warning', 'info').
      */
-    function showMessage(message, type = 'info') {
-        searchMessage.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
-        // Remove a mensagem após 5 segundos
-        setTimeout(() => {
-            searchMessage.innerHTML = '';
-        }, 5000);
+    function showMessage(message, type) {
+        const flashMessagesDiv = document.querySelector('.flash-messages');
+        if (flashMessagesDiv) {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert', `alert-${type}`, 'alert-dismissible', 'fade', 'show');
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            flashMessagesDiv.appendChild(alertDiv);
+            // Remove a mensagem após 5 segundos
+            setTimeout(() => {
+                bootstrap.Alert.getInstance(alertDiv)?.close();
+            }, 5000);
+        } else {
+            console.warn('Elemento .flash-messages não encontrado para exibir a mensagem:', message);
+            alert(`${type.toUpperCase()}: ${message}`); // Fallback para alert()
+        }
     }
 
     /**
      * Busca os detalhes de um produto no backend usando o código de barras.
-     * Preenche o card de detalhes do produto se encontrado.
-     * @param {string} barcode - O código de barras a ser buscado.
-     * @returns {Promise<boolean>} - True se o produto foi encontrado, False caso contrário.
+     * Atualiza o card de detalhes do produto e decide se abre o modal de seleção de lote
+     * ou incrementa automaticamente.
+     * @param {string} barcode - O código de barras do produto.
      */
     async function fetchProductDetails(barcode) {
         try {
+            const formData = new FormData();
+            formData.append('barcode', barcode);
+
             const response = await fetch('/search_product', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded', // Formato para envio de formulário simples
-                },
-                body: `barcode=${barcode}` // Envia o código de barras no corpo da requisição
-            });
-            const data = await response.json(); // Converte a resposta para JSON
-
-            if (data.success) {
-                currentProduct = data.product; // Armazena os detalhes do produto encontrado
-                // Preenche os campos do card de detalhes do produto
-                codigoProdutoInput.value = currentProduct.codigo_produto;
-                codigoBarrasInput.value = currentProduct.codigo_barras;
-                nomeProdutoInput.value = currentProduct.nome_produto;
-                loteInput.value = currentProduct.lote || ''; // Usa lote vazio se nulo
-                dataFabricacaoInput.value = currentProduct.data_fabricacao || '';
-                dataValidadeInput.value = currentProduct.data_validade || '';
-                multiplicadorInput.value = currentProduct.multiplicador_sugerido || 1; // Define o multiplicador sugerido
-                unidadeVendaInput.value = currentProduct.unidade_venda || 'UN'; // Define a unidade de venda
-                productDetailsCard.style.display = 'block'; // Exibe o card de detalhes
-                showMessage('Produto encontrado!', 'success');
-                return true;
-            } else {
-                showMessage(data.message, 'danger'); // Exibe mensagem de erro
-                productDetailsCard.style.display = 'none'; // Oculta o card de detalhes
-                currentProduct = null; // Limpa o produto atual
-                return false;
-            }
-        } catch (error) {
-            console.error('Erro ao buscar produto:', error);
-            showMessage('Erro ao conectar com o servidor.', 'danger');
-            productDetailsCard.style.display = 'none';
-            currentProduct = null;
-            return false;
-        }
-    }
-
-    /**
-     * Adiciona o produto atualmente selecionado à lista de contagem no backend.
-     * @returns {Promise<object|null>} - A resposta JSON do backend ou null em caso de erro.
-     */
-    async function addCurrentProductToCount() {
-        if (!currentProduct) {
-            showMessage('Nenhum produto selecionado para adicionar.', 'warning');
-            return null;
-        }
-
-        // Prepara os dados do produto para enviar ao backend
-        const productToAdd = {
-            codigo_produto: currentProduct.codigo_produto,
-            codigo_barras: currentProduct.codigo_barras,
-            nome_produto: currentProduct.nome_produto,
-            lote: loteInput.value, // Lote pode ter sido editado pelo usuário
-            data_fabricacao: dataFabricacaoInput.value,
-            data_validade: dataValidadeInput.value,
-            multiplicador_sugerido: multiplicadorInput.value, // Multiplicador sugerido
-            unidade_venda: unidadeVendaInput.value // Unidade de venda
-        };
-
-        try {
-            const response = await fetch('/add_to_count', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json', // Envia dados em formato JSON
-                },
-                body: JSON.stringify(productToAdd) // Converte o objeto para string JSON
+                body: formData
             });
             const data = await response.json();
 
             if (data.success) {
-                updateCountedProductsTable(data.counted_products); // Atualiza a tabela com os novos dados
-                // A mensagem agora é exibida no searchForm.addEventListener
-                return data; // Retorna a resposta completa para o event listener
+                currentProductDetails = data; // Armazena os detalhes do produto
+
+                // Atualiza o card de detalhes do produto
+                detailCodigoProduto.textContent = data.product.codigo_produto;
+                detailNomeProduto.textContent = data.product.nome_produto;
+                detailCodigoBarras.textContent = data.product.codigo_barras;
+                detailUnidadeVenda.textContent = data.product.unidade_venda;
+                detailMultiplicadorSugerido.textContent = data.product.multiplicador_sugerido;
+                productDetailsCard.style.display = 'block'; // Exibe o card
+
+                // Lógica de decisão para adição automática ou abertura do modal
+                const lastCountedLot = data.last_counted_lot;
+                const availableLotes = data.lotes;
+
+                if (lastCountedLot) {
+                    // Verifica se o último lote contado ainda está entre os lotes disponíveis do SQL Server
+                    const matchingAvailableLot = availableLotes.find(l => 
+                        l.lote === lastCountedLot.lote &&
+                        l.data_fabricacao === lastCountedLot.data_fabricacao &&
+                        l.data_validade === lastCountedLot.data_validade
+                    );
+
+                    if (matchingAvailableLot) {
+                        // Se o último lote contado ainda existe e está disponível, tenta incrementar
+                        await addProductToLastCountedLot(lastCountedLot.id);
+                        productDetailsCard.style.display = 'none'; // Oculta o card após a adição automática
+                        currentProductDetails = null; // Limpa o produto atual
+                        return; // Sai da função, pois a ação já foi realizada
+                    }
+                }
+
+                // Se não houve adição automática, o card de detalhes permanece visível.
+                // Se houver apenas um lote disponível e não houver último lote contado,
+                // o botão "Adicionar ao Lote Padrão/Último" cuidará disso.
+                // Se houver múltiplos lotes e nenhum último lote, o usuário precisará usar os botões.
+                showMessage(`Produto ${data.product.nome_produto} encontrado.`, 'success');
+
             } else {
                 showMessage(data.message, 'danger');
-                return null;
+                productDetailsCard.style.display = 'none'; // Oculta o card se o produto não for encontrado
+                currentProductDetails = null; // Limpa o produto atual
             }
         } catch (error) {
-            console.error('Erro ao adicionar produto à contagem:', error);
-            showMessage('Erro ao conectar com o servidor para adicionar produto.', 'danger');
-            return null;
+            console.error('Erro ao buscar produto:', error);
+            showMessage('Erro ao conectar com o servidor para buscar produto.', 'danger');
+            productDetailsCard.style.display = 'none';
+            currentProductDetails = null;
         }
     }
 
     /**
-     * Atualiza a tabela de produtos contados na interface do usuário.
-     * Agrupa os produtos pelo Código do Produto e exibe os lotes abaixo.
+     * Abre o modal de seleção de lote e preenche com os lotes do produto atual.
+     */
+    function openSelectLotModal() {
+        if (!currentProductDetails || !currentProductDetails.lotes || currentProductDetails.lotes.length === 0) {
+            showMessage('Nenhum produto ou lote disponível para seleção. Por favor, busque um produto primeiro.', 'warning');
+            return;
+        }
+
+        modalProductName.textContent = currentProductDetails.product.nome_produto;
+        modalMultiplicadorSugerido.textContent = currentProductDetails.product.multiplicador_sugerido;
+        lotesTableBody.innerHTML = ''; // Limpa a tabela de lotes anterior
+        selectLotMessage.classList.add('d-none'); // Oculta mensagens de erro anteriores
+
+        currentProductDetails.lotes.forEach((lote, index) => {
+            const row = lotesTableBody.insertRow();
+            const radioCell = row.insertCell(0);
+            const loteCell = row.insertCell(1);
+            const fabCell = row.insertCell(2);
+            const valCell = row.insertCell(3);
+            const saldoCell = row.insertCell(4);
+
+            radioCell.innerHTML = `<input type="radio" name="selectedLot" value="${index}" ${index === 0 ? 'checked' : ''}>`;
+            loteCell.textContent = lote.lote;
+            fabCell.textContent = lote.data_fabricacao;
+            valCell.textContent = lote.data_validade;
+            saldoCell.textContent = lote.saldo_disponivel;
+
+            // Destaca lotes com saldo zero ou negativo
+            if (lote.saldo_disponivel <= 0) {
+                row.classList.add('table-danger'); // Adiciona classe para estilização de perigo
+                saldoCell.innerHTML += ' <span class="badge bg-danger">Saldo Zero/Negativo</span>';
+            }
+        });
+
+        quantityBaseInput.value = 1; // Reseta a quantidade para 1
+        selectLotModal.show(); // Exibe o modal
+    }
+
+    /**
+     * Adiciona o lote selecionado (do modal) à lista de contagem no backend.
+     * @param {object} [productDataOverride=null] - Dados do produto/lote para adicionar, se não vier do modal.
+     * @param {number} [quantityOverride=null] - Quantidade base a usar, se não vier do input do modal.
+     */
+    async function addSelectedLotToCount(productDataOverride = null, quantityOverride = null) {
+        if (!currentProductDetails) {
+            showMessage('Nenhum produto selecionado para adicionar.', 'warning');
+            return;
+        }
+
+        let selectedLotIndex;
+        let quantityBase;
+
+        if (productDataOverride) {
+            // Se os dados vêm de um override (ex: botão "Adicionar ao Lote Padrão/Único")
+            selectedLotIndex = currentProductDetails.lotes.findIndex(l => 
+                l.lote === productDataOverride.lote &&
+                l.data_fabricacao === productDataOverride.data_fabricacao &&
+                l.data_validade === productDataOverride.data_validade
+            );
+            quantityBase = productDataOverride.quantidade_base;
+        } else {
+            // Se os dados vêm do modal de seleção de lote
+            const selectedRadio = document.querySelector('input[name="selectedLot"]:checked');
+            if (!selectedRadio) {
+                showMessage('Por favor, selecione um lote.', 'warning', selectLotMessage);
+                return;
+            }
+            selectedLotIndex = parseInt(selectedRadio.value);
+            quantityBase = quantityOverride !== null ? quantityOverride : parseInt(quantityBaseInput.value);
+        }
+
+        if (isNaN(quantityBase) || quantityBase <= 0) {
+            showMessage('Por favor, insira uma quantidade válida maior que zero.', 'warning', selectLotMessage);
+            return;
+        }
+
+        const selectedLot = currentProductDetails.lotes[selectedLotIndex];
+        if (!selectedLot) {
+            showMessage('Lote selecionado inválido.', 'danger', selectLotMessage);
+            return;
+        }
+
+        // Prepara os dados para enviar ao backend
+        const productData = {
+            codigo_produto: currentProductDetails.product.codigo_produto,
+            codigo_barras: currentProductDetails.product.codigo_barras,
+            nome_produto: currentProductDetails.product.nome_produto,
+            lote: selectedLot.lote,
+            data_fabricacao: selectedLot.data_fabricacao,
+            data_validade: selectedLot.data_validade,
+            quantidade_base: quantityBase,
+            multiplicador_sugerido: currentProductDetails.product.multiplicador_sugerido
+        };
+
+        try {
+            const response = await fetch('/add_to_selected_lot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productData)
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                selectLotModal.hide(); // Oculta o modal
+                productDetailsCard.style.display = 'none'; // Oculta o card de detalhes
+                currentProductDetails = null; // Limpa o produto atual
+                updateCountedProductsTable(data.counted_products); // Atualiza a tabela
+                showMessage(data.message, 'success');
+            } else {
+                showMessage(data.message, 'danger', selectLotMessage); // Exibe erro no modal
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar lote selecionado:', error);
+            showMessage('Erro ao conectar com o servidor para adicionar lote.', 'danger', selectLotMessage);
+        }
+    }
+
+    /**
+     * Incrementa a quantidade de um item já contado no SQLite.
+     * @param {number} countedProductId - O ID do item na tabela ColetaEstoque (SQLite).
+     */
+    async function addProductToLastCountedLot(countedProductId) {
+        try {
+            const response = await fetch('/add_to_last_counted_lot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: countedProductId, quantity_to_add: 1 }) // Incrementa 1 unidade base
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                updateCountedProductsTable(data.counted_products);
+                showMessage(data.message, 'success');
+            } else {
+                showMessage(data.message, 'danger');
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar ao último lote contado:', error);
+            showMessage('Erro ao conectar com o servidor para adicionar ao último lote.', 'danger');
+        }
+    }
+
+    /**
+     * Atualiza a tabela de produtos contados no frontend.
+     * Agrupa os produtos pelo CodigoProduto e lista os lotes abaixo.
      * @param {Array<object>} products - Uma lista de objetos de produtos contados.
      */
     function updateCountedProductsTable(products) {
-        countedProductsTableBody.innerHTML = ''; // Limpa o corpo da tabela
+        countedProductsTableBody.innerHTML = '';
         if (products.length === 0) {
             countedProductsTableBody.innerHTML = `<tr><td colspan="8" class="text-center">Nenhum produto contado ainda.</td></tr>`;
             return;
         }
 
-        let currentCodigoProduto = null; // Variável para controlar o agrupamento por produto
+        let currentCodigoProduto = null;
+        let rowCount = 0; // Para numerar as linhas
 
         products.forEach(product => {
-            // Se o código do produto mudou (ou é o primeiro item), cria uma nova linha de agrupamento
+            // Se o código do produto for diferente do anterior, cria uma nova linha de grupo
             if (product.codigo_produto !== currentCodigoProduto) {
                 currentCodigoProduto = product.codigo_produto;
 
-                // Cria uma linha de cabeçalho para o grupo de produtos
                 const productGroupRow = countedProductsTableBody.insertRow();
-                productGroupRow.classList.add('table-primary', 'fw-bold'); // Estilo Bootstrap para destacar
+                productGroupRow.classList.add('table-primary', 'fw-bold'); // Estilo para destacar o grupo
 
                 const productCell = productGroupRow.insertCell(0);
-                productCell.colSpan = 8; // Faz a célula ocupar todas as 8 colunas
+                productCell.colSpan = 8; // Ocupa todas as colunas
                 productCell.innerHTML = `Produto: ${product.codigo_produto} - ${product.nome_produto} (Cód. Barras: ${product.codigo_barras})`;
             }
 
-            // Cria uma linha para o item de lote específico
+            // Adiciona a linha do item de lote individual
             const row = countedProductsTableBody.insertRow();
-            row.classList.add('product-item-row'); // Adiciona uma classe para estilização futura, se necessário
+            row.classList.add('product-item-row'); // Classe para estilização de itens individuais
 
-            // Preenche as células com os detalhes do lote
-            row.insertCell(0).textContent = ''; // Célula vazia para criar uma indentação visual
+            row.insertCell(0).textContent = ++rowCount; // Número da linha
             row.insertCell(1).textContent = product.codigo_barras;
             row.insertCell(2).textContent = product.nome_produto;
             row.insertCell(3).textContent = product.lote;
             row.insertCell(4).textContent = product.data_fabricacao;
             row.insertCell(5).textContent = product.data_validade;
 
-            // Formata a exibição da quantidade total (base x multiplicador)
+            // Exibe a quantidade total e, se houver multiplicador, também a quantidade base x multiplicador
             const qtdText = product.multiplicador_usado && product.multiplicador_usado !== 1 
                             ? `${product.quantidade_total} (${product.quantidade_base} x${product.multiplicador_usado})` 
                             : product.quantidade_total;
             row.insertCell(6).textContent = qtdText;
 
-            // Cria a célula para os botões de ação (Editar e Remover)
             const actionsCell = row.insertCell(7);
 
             // Botão Editar
@@ -328,19 +478,70 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault(); // Previne o comportamento padrão de recarregar a página
         const barcode = barcodeInput.value.trim(); // Obtém o valor do código de barras
         if (barcode) {
-            const productFound = await fetchProductDetails(barcode); // Busca os detalhes do produto
-            if (productFound) {
-                const addResponse = await addCurrentProductToCount(); // Adiciona à contagem
-                if (addResponse && addResponse.success) {
-                    showMessage(addResponse.message, 'success'); // Exibe a mensagem de sucesso do backend
-                }
-            }
+            await fetchProductDetails(barcode); // A lógica de decisão está dentro de fetchProductDetails
             barcodeInput.value = ''; // Limpa o campo de código de barras
             barcodeInput.focus(); // Retorna o foco para o campo para o próximo bip
         } else {
             showMessage('Por favor, insira um código de barras.', 'warning');
         }
     });
+
+    // Evento para o botão "Adicionar ao Lote Padrão/Último" (no card de detalhes)
+    addDefaultLotBtn.addEventListener('click', async function() {
+        if (!currentProductDetails) {
+            showMessage('Nenhum produto selecionado.', 'warning');
+            return;
+        }
+
+        const lastCountedLot = currentProductDetails.last_counted_lot;
+        const availableLotes = currentProductDetails.lotes;
+
+        if (lastCountedLot) {
+            // Se há um último lote contado, usa-o para incrementar
+            // (A validação de saldo para incremento já ocorre no backend)
+            await addProductToLastCountedLot(lastCountedLot.id);
+            productDetailsCard.style.display = 'none';
+            currentProductDetails = null;
+        } else if (availableLotes.length === 1) {
+            // Se não há último lote contado, mas só há um lote disponível no SQL Server, adiciona ele automaticamente
+            const defaultLot = availableLotes[0];
+            const productData = {
+                codigo_produto: currentProductDetails.product.codigo_produto,
+                codigo_barras: currentProductDetails.product.codigo_barras,
+                nome_produto: currentProductDetails.product.nome_produto,
+                lote: defaultLot.lote,
+                data_fabricacao: defaultLot.data_fabricacao,
+                data_validade: defaultLot.data_validade,
+                quantidade_base: 1,
+                multiplicador_sugerido: currentProductDetails.product.multiplicador_sugerido
+            };
+            await addSelectedLotToCount(productData);
+            productDetailsCard.style.display = 'none';
+            currentProductDetails = null;
+        } else {
+            // Se não há último lote contado e há múltiplos lotes no SQL Server,
+            // abre o modal para o usuário escolher.
+            openSelectLotModal();
+        }
+    });
+
+    // Evento para o botão "Adicionar Lote Diferente" (no card de detalhes)
+    selectDifferentLotBtn.addEventListener('click', openSelectLotModal);
+
+    // NOVO EVENT LISTENER: Para o botão "Adicionar Lote Manualmente" (agora na seção de ações da tabela)
+    addManualLotBtn.addEventListener('click', function() {
+        if (!currentProductDetails || !currentProductDetails.lotes || currentProductDetails.lotes.length === 0) {
+            showMessage('Por favor, busque um produto com lotes disponíveis primeiro para poder adicionar um lote manualmente.', 'warning');
+            return;
+        }
+        openSelectLotModal(); // Sempre abre o modal de seleção de lote
+    });
+
+    // Evento para adicionar o lote selecionado (botão "Adicionar Lote Selecionado" dentro do modal)
+    addSelectedLotBtn.addEventListener('click', () => addSelectedLotToCount(null)); // Passa null para indicar que os dados vêm do modal
+
+    // NOVO EVENT LISTENER: Para o botão "Adicionar Rápido (Qtd: 1)" DENTRO DO MODAL
+    addQuickLotModalBtn.addEventListener('click', () => addSelectedLotToCount(null, 1)); // Passa null para dados do botão, e 1 para quantityOverride
 
     // Event Listeners para atualizar a quantidade total no modal de edição dinamicamente
     editQuantidadeBaseInput.addEventListener('input', updateEditTotalQuantity);
@@ -367,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateCountedProductsTable([]); // Limpa a tabela no frontend
                     showMessage(data.message, 'info');
                     productDetailsCard.style.display = 'none'; // Oculta detalhes do produto
-                    currentProduct = null; // Limpa o produto atual
+                    currentProductDetails = null; // Limpa o produto atual
                 } else {
                     showMessage(data.message, 'danger');
                 }
