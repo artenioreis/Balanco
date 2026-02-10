@@ -2,18 +2,18 @@
 
 /* Estilos gerais do corpo da página */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte padrão */
     background-color: #f8f9fa; /* Cor de fundo clara */
     color: #343a40; /* Cor de texto padrão escura */
     padding-top: 20px; /* Espaçamento no topo para o conteúdo */
     padding-bottom: 20px; /* Espaçamento na parte inferior */
 }
 
-/* Estilos para o container principal */
+/* Estilos para o container principal que centraliza o conteúdo */
 .container {
-    max-width: 1200px; /* Largura máxima do container para centralizar o conteúdo */
-    margin-left: auto; /* Centraliza o container */
-    margin-right: auto; /* Centraliza o container */
+    max-width: 1200px; /* Largura máxima do container */
+    margin-left: auto; /* Centraliza o container horizontalmente */
+    margin-right: auto; /* Centraliza o container horizontalmente */
 }
 
 /* Estilos para os cards (seções com bordas e sombra) */
@@ -23,6 +23,7 @@ body {
     border-radius: 8px; /* Bordas arredondadas */
 }
 
+/* Estilos para o cabeçalho dos cards */
 .card-header {
     background-color: #007bff; /* Cor de fundo azul para o cabeçalho do card */
     color: white; /* Texto branco no cabeçalho */
@@ -31,11 +32,12 @@ body {
     border-top-right-radius: 8px; /* Bordas arredondadas no topo */
 }
 
-/* Estilos para formulários e inputs */
+/* Estilos para rótulos de formulário */
 .form-label {
     font-weight: 600; /* Rótulos de formulário em negrito */
 }
 
+/* Estilos para inputs de formulário quando em foco */
 .form-control:focus {
     border-color: #80bdff; /* Borda azul mais clara ao focar */
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra ao focar */
@@ -47,9 +49,11 @@ body {
     border-radius: 5px; /* Bordas arredondadas */
 }
 
-/* Estilos específicos para a tabela de produtos contados */
+/* --- Estilos específicos para a tabela de produtos contados --- */
+
+/* Diminui a fonte para todo o corpo da tabela de produtos contados */
 #countedProductsTableBody {
-    font-size: 0.85em; /* Diminui a fonte para 85% do tamanho padrão para economizar espaço */
+    font-size: 0.85em; /* 85% do tamanho da fonte padrão */
 }
 
 /* Ajusta o padding das células da tabela para torná-las mais compactas */
@@ -68,7 +72,7 @@ body {
 
 /* Estilos para a coluna de ações para garantir que os botões fiquem lado a lado */
 #countedProductsTableBody td:last-child {
-    white-space: nowrap; /* Impede que os botões quebrem linha */
+    white-space: nowrap; /* Impede que o conteúdo da célula quebre linha */
     min-width: 120px;    /* Garante uma largura mínima para a coluna de ações */
 }
 
@@ -86,7 +90,7 @@ body {
     background-color: #f2f2f2; /* Cor de fundo para o rodapé */
 }
 
-/* Estilos para o modal de edição */
+/* --- Estilos para o modal de edição --- */
 #editProductModal .modal-content {
     border-radius: 10px; /* Bordas arredondadas para o modal */
     box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Sombra mais forte para o modal */
@@ -103,7 +107,7 @@ body {
     font-weight: bold; /* Título do modal em negrito */
 }
 
-/* Estilos para botões */
+/* --- Estilos para botões Bootstrap personalizados --- */
 .btn-primary {
     background-color: #007bff;
     border-color: #007bff;
@@ -155,9 +159,9 @@ body {
     border-color: #545b62;
 }
 
-/* Estilos para a seção de detalhes do produto encontrado */
+/* Estilos para a seção de detalhes do produto encontrado (inicialmente oculta) */
 #productDetailsCard {
-    display: none; /* Inicialmente oculto, será mostrado via JS */
+    display: none; /* Controlado via JavaScript para mostrar/ocultar */
 }
 
 /* Estilos para a barra de navegação ou cabeçalho (se houver) */
